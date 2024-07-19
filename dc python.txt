@@ -1,0 +1,174 @@
+import numpy as np
+import sympy as sp
+
+def symbolic_differentiation():
+    # Ask the user to choose between a general function and specifying u(x) and v(x) for the quotient rule
+    choice = input("Do you want to differentiate a general function or use the quotient rule? (general/quotient): ").strip().lower()
+
+    if choice == 'general':
+        # Ask the user to enter the function they want to differentiate
+        function_str = input("Enter the function you want to differentiate (e.g., 'tan(x)', 'sin(x)', 'cos(x)', 'x**2', 'x * sin(x)', 'x / cos(x)', etc.): ")
+
+        # Define the symbolic variable x
+        x = sp.symbols('x')
+
+        # Hardcoded derivatives for trigonometric functions
+        hardcoded_derivatives = {
+            'tan(x)': sp.sec(x)**2,
+            'cot(x)': -sp.csc(x)**2,
+            'csc(x)': -sp.csc(x) * sp.cot(x),
+            'sec(x)': sp.sec(x) * sp.tan(x),
+            'sin(x)': sp.cos(x),
+            'cos(x)': -sp.sin(x)
+        }
+
+        try:
+            # Check if the input function is a hardcoded trigonometric function
+            if function_str in hardcoded_derivatives:
+                # Use the hardcoded derivative for the function
+                derivative = hardcoded_derivatives[function_str]
+                print(f"The symbolic derivative of {function_str} is: {derivative}")
+            else:
+                # Parse the input function using `sympy.sympify`
+                function = sp.sympify(function_str)
+
+                # Compute the symbolic derivative
+                derivative = sp.diff(function, x)
+
+                # Simplify the derivative
+                simplified_derivative = sp.simplify(derivative)
+
+                # Print the result
+                print(f"The simplified symbolic derivative of {function_str} is: {simplified_derivative}")
+
+        except sp.SympifyError:
+            # Handle the case where the function can't be parsed
+            print(f"Error: Could not parse the function '{function_str}'. Please check the syntax and try again.")
+        except Exception as e:
+            # Handle other potential exceptions and print an error message
+            print(f"An error occurred while computing the derivative: {e}")
+
+    elif choice == 'quotient':
+        # Ask the user to enter u(x) and v(x) for the quotient rule
+        u_str = input("Enter the function u(x) for the quotient rule: ")
+        v_str = input("Enter the function v(x) for the quotient rule: ")
+
+        try:
+            # Parse the input functions using `sympy.sympify`
+            u = sp.sympify(u_str)
+            v = sp.sympify(v_str)
+
+            # Define the symbolic variable x
+            x = sp.symbols('x')
+
+            # Compute the derivatives of u(x) and v(x)
+            u_prime = sp.diff(u, x)
+            v_prime = sp.diff(v, x)
+
+            # Apply the quotient rule: (u'v - uv') / v^2
+            derivative = (u_prime * v - u * v_prime) / v**2
+
+            # Simplify the derivative
+            simplified_derivative = sp.simplify(derivative)
+
+            # Print the result
+            print(f"The simplified symbolic derivative of ({u_str}) / ({v_str}) is: {simplified_derivative}")
+
+        except sp.SympifyError:
+            # Handle the case where the function can't be parsed
+            print(f"Error: Could not parse the functions '{u_str}' or '{v_str}'. Please check the syntax and try again.")
+        except Exception as e:
+            # Handle other potential exceptions and print an error message
+            print(f"An error occurred while computing the derivative: {e}")
+
+    else:
+        print("Invalid choice. Please try again.")
+
+def numerical_differentiation():
+    # Ask the user to choose between a general function and specifying u(x) and v(x) for the quotient rule
+    choice = input("Do you want to differentiate a general function or use the quotient rule? (general/quotient): ").strip().lower()
+
+    if choice == 'general':
+        # Ask the user to enter the function
+        function_str = input("Enter the function you want to differentiate (e.g., 'np.sin(x)', 'np.cos(x)', 'np.tan(x)', 'x**2', etc.): ")
+
+        # Define the symbolic variable x
+        x = sp.symbols('x')
+
+        try:
+            # Define the function using eval and lambda to support np functions
+            function = eval(f"lambda x: {function_str}", {"np": np, "sqrt": np.sqrt, "sin": np.sin, "cos": np.cos, "tan": np.tan, "exp": np.exp, "log": np.log, "pi": np.pi})
+
+            # Compute the numerical derivative using the central difference method
+            x_value = float(input("Enter the value of x at which you want to compute the derivative: "))
+            h = float(input("Enter the step size h (small value like 0.001): "))
+
+            # Compute the numerical derivative using the central difference method
+            numerical_derivative = (function(x_value + h) - function(x_value - h)) / (2 * h)
+
+            # Print the numerical derivative
+            print(f"The numerical derivative of {function_str} at x = {x_value} is: {numerical_derivative}")
+
+        except Exception as e:
+            print(f"An error occurred while computing the derivative: {e}")
+
+    elif choice == 'quotient':
+        # Ask the user to enter u(x) and v(x) for the quotient rule
+        u_str = input("Enter the function u(x) for the quotient rule: ")
+        v_str = input("Enter the function v(x) for the quotient rule: ")
+
+        try:
+            # Parse the input functions using `sympy.sympify`
+            u = sp.sympify(u_str)
+            v = sp.sympify(v_str)
+
+            # Define the symbolic variable x
+            x = sp.symbols('x')
+
+            # Compute the numerical derivatives of u(x) and v(x)
+            u_prime = sp.diff(u, x)
+            v_prime = sp.diff(v, x)
+
+            # Define lambda functions for u(x) and v(x)
+            u_func = eval(f"lambda x: {u_str}", {"np": np, "sqrt": np.sqrt, "sin": np.sin, "cos": np.cos, "tan": np.tan, "exp": np.exp, "log": np.log, "pi": np.pi})
+            v_func = eval(f"lambda x: {v_str}", {"np": np, "sqrt": np.sqrt, "sin": np.sin, "cos": np.cos, "tan": np.tan, "exp": np.exp, "log": np.log, "pi": np.pi})
+
+            # Compute the numerical derivative of u(x) and v(x) at a specific x value
+            x_value = float(input("Enter the value of x at which you want to compute the derivative: "))
+            u_value = u_func(x_value)
+            v_value = v_func(x_value)
+
+            # Apply the quotient rule: (u'v - uv') / v^2
+            numerical_derivative = (u_prime.evalf(subs={x: x_value}) * v_value - u_value * v_prime.evalf(subs={x: x_value})) / v_value**2
+
+            # Print the numerical derivative
+            print(f"The numerical derivative of ({u_str}) / ({v_str}) at x = {x_value} is: {numerical_derivative}")
+
+        except Exception as e:
+            print(f"An error occurred while computing the derivative: {e}")
+
+    else:
+        print("Invalid choice. Please try again.")
+
+def main():
+    while True:
+        print("\n-----------------------------DERIVATIVE CALCULATOR----------------------------------")
+        print("\nDifferentiation Menu:")
+        print("1. Symbolic Differentiation")
+        print("2. Numerical Differentiation")
+        print("3. Exit")
+
+        choice = input("Enter your choice (1, 2, or 3): ")
+
+        if choice == '1':
+            symbolic_differentiation()
+        elif choice == '2':
+            numerical_differentiation()
+        elif choice == '3':
+            print("Exiting the program.")
+            break
+        else:
+            print("Invalid choice. Please try again.")
+
+if __name__ == "__main__":
+    main()
