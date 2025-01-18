@@ -1,0 +1,533 @@
+import datetime
+
+class Book:
+    def __init__(self, title, author, isbn, status="available"):
+        self.title = title
+        self.author = author
+        self.isbn = isbn
+        self.status = status
+
+
+class Ebook:
+    def __init__(self, title, author, format):
+        self.title = title
+        self.author = author
+        self.format = format
+
+
+class LinkedList:
+    def __init__(self):
+        self.head = None
+        self.tail = None
+
+    class Node:
+        def __init__(self, data):
+            self.data = data
+            self.next = None
+
+    # Append data to the end of the linked list
+    def append(self, data):
+        new_node = self.Node(data)
+        if not self.head:
+            self.head = new_node
+            self.tail = new_node
+        else:
+            self.tail.next = new_node
+            self.tail = new_node
+
+    # Remove data from the linked list
+    def remove(self, data):
+        current = self.head
+        previous = None
+
+        while current:
+            if current.data == data:
+                if previous:
+                    previous.next = current.next
+                else:
+                    self.head = current.next
+                if current == self.tail:
+                    self.tail = previous
+                return True
+            previous = current
+            current = current.next
+        return False
+
+    # Search for data in the linked list and return matches
+    def search(self, query):
+        current = self.head  # Start traversal from the head of the linked list
+        results = []  # Initialize an empty list to store the search results
+        while current:
+            # Compare the query with title, author, and ISBN in a case-insensitive manner
+            if (query.lower() in current.data.title.lower() or
+                    query.lower() in current.data.author.lower() or
+                    query.lower() in current.data.isbn):
+                # If there's a match, append the book to the results list
+                results.append(current.data)
+            current = current.next  # Move to the next node in the linked list
+        return results  # Return the list of matching books
+
+
+class Stack:
+    def __init__(self):
+        self.items = []
+
+    # Push an item onto the stack
+    def push(self, item):
+        self.items.append(item)
+
+    # Pop an item from the stack
+    def pop(self):
+        if self.items:
+            return self.items.pop()
+        return None
+
+    # Check the top item of the stack
+    def peek(self):
+        if self.items:
+            return self.items[-1]
+        return None
+
+    # Check if the stack is empty
+    def is_empty(self):
+        return len(self.items) == 0
+
+    # Search for items in the stack
+    def search(self, query):
+        results = []
+        for ebook in self.items:
+            if (query.lower() in ebook.title.lower() or query.lower() in ebook.author.lower()):
+                results.append(ebook)
+        return results
+
+
+class Queue:
+    def __init__(self):
+        self.items = []
+
+    # Enqueue an item onto the queue
+    def enqueue(self, item):
+        self.items.append(item)
+
+    # Dequeue an item from the queue
+    def dequeue(self):
+        if self.items:
+            return self.items.pop(0)
+        return None
+
+    # Check if the queue is empty
+    def is_empty(self):
+        return len(self.items) == 0
+
+
+class LibraryManagementSystem:
+    def __init__(self):
+        # Initialize linked list for books
+        self.books_linkedlist = LinkedList()
+        # Initialize stack for ebooks
+        self.ebooks_stack = Stack()
+        # Initialize queue for available books
+        self.available_books_queue = Queue()
+        # Initialize array (Python list) for available ebooks
+        self.available_ebooks = []
+
+        # Load resources (books and ebooks) from files
+        self.load_books_from_file("C:/DSAproject/book.txt")
+        self.load_ebooks_from_file("C:/DSAproject/ebook.txt")
+
+        # Method to handle receiving a book
+
+    def receive_book(self):
+        print("\nReceive Book")
+
+        # Receiver's details
+        receiver_name = input("Enter receiver's name: ")
+        father_name = input("Enter receiver's father's name: ")
+        receiver_id = input("Enter receiver's ID: ")
+
+        # Book details
+        book_title = input("Enter the title of the book: ")
+
+        # Current date and time for receiving
+        from datetime import datetime, timedelta
+        receive_date_time = datetime.now()
+        print(f"Date and time of receiving: {receive_date_time}")
+
+        # Due date as two weeks from the current date (only date)
+        due_date = (receive_date_time + timedelta(weeks=2)).date()
+        print(f"Due date: {due_date}")
+
+        # Search for the book in the linked list of books
+        books = self.books_linkedlist.search(book_title)
+        book = None
+        if books:
+            for b in books:
+                if b.status == "available":
+                    book = b
+                    break
+
+        # Check if the book was found and is available
+        if not book:
+            print("Book not found or is not available.")
+            return
+
+        # Update the status of the book to "unavailable"
+        book.status = "unavailable"
+
+        # Remove the book from `available_books_queue`
+        self.available_books_queue.items = [b for b in self.available_books_queue.items if b != book]
+
+        # Save the receiver's details in the `receivers.txt` file
+        with open("C:/EmazWorkspace/DSAproject/receiver.txt", "a") as file:
+            file.write(
+                f"{receiver_name},{father_name},{receiver_id},{book.title},{book.author},{receive_date_time},{due_date}\n")
+
+        print("Book received and details saved successfully.")
+
+    def return_book(self):
+        print("\nReturn Book")
+
+        # Get the receiver's ID
+        receiver_id = input("Enter receiver's ID: ")
+
+        # Open the receivers file and read the records
+        with open("C:/DSAproject/receiver.txt", "r") as file:
+            records = file.readlines()
+
+        # Initialize lists for receiver's records and other records
+        receiver_records = []
+        updated_records = []
+
+        # Filter records that match the receiver ID and add others to the updated list
+        for record in records:
+            fields = record.strip().split(',')
+            if fields[2] == receiver_id:
+                receiver_records.append(fields)
+            else:
+                updated_records.append(record)
+
+        # If no records found for the given receiver ID
+        if not receiver_records:
+            print("Receiver ID not found.")
+            return
+
+        # Display receiver details and list of received books
+        print(f"\nReceiver Details for ID: {receiver_id}")
+        print("List of received books:")
+        for idx, fields in enumerate(receiver_records):
+            book_title = fields[3]
+            author = fields[4]
+            receive_date_time = fields[5]
+            due_date = fields[6]
+            print(f"{idx + 1}. Book: {book_title} by {author}")
+            print(f"Received on: {receive_date_time}")
+            print(f"Due date: {due_date}\n")
+
+        # Allow the user to select which book to return
+        while True:
+            try:
+                choice = int(input("Enter the number of the book to return: ")) - 1
+                if 0 <= choice < len(receiver_records):
+                    break
+                print("Invalid choice. Please enter a valid number.")
+            except ValueError:
+                print("Invalid input. Please enter a valid number.")
+
+        # Get the selected book's details
+        selected_record = receiver_records[choice]
+        book_title = selected_record[3]
+        author = selected_record[4]
+
+        # Remove the selected book's record from the list of receiver's records
+        receiver_records.pop(choice)
+
+        # Add remaining receiver's records back to the updated list
+        updated_records.extend([','.join(fields) + '\n' for fields in receiver_records])
+
+        # Write the updated records back to the `receivers.txt` file
+        with open("C:/EmazWorkspace/DSAproject/receiver.txt", "w") as file:
+            file.writelines(updated_records)
+
+        # Update the book status to "available" in the linked list
+        books = self.books_linkedlist.search(book_title)
+        book = None
+        for b in books:
+            if b.author == author:
+                b.status = "available"
+                book = b
+                break
+
+        # Add the book back to the `available_books_queue`
+        if book and book not in self.available_books_queue.items:
+            self.available_books_queue.enqueue(book)
+            print(f"Book '{book_title}' by {author} returned successfully and re-added to the available books queue.")
+        else:
+            print(f"Book '{book_title}' by {author} not found in the linked list.")
+
+    def get_receiver_details(self):
+        print("\nRetrieve Receiver Details")
+
+        # Get the receiver's ID
+        receiver_id = input("Enter receiver's ID: ")
+
+        # Open the receivers file and read the records
+        with open("C:/EmazWorkspace/DSAproject/receiver.txt", "r") as file:
+            records = file.readlines()
+
+        # Filter records that match the receiver ID
+        receiver_records = []
+        for record in records:
+            fields = record.strip().split(',')
+            if fields[2] == receiver_id:
+                receiver_records.append(fields)
+
+        # If no records found for the given receiver ID
+        if not receiver_records:
+            print("Receiver ID not found.")
+            return
+
+        # Display receiver details and list of received books
+        print(f"\nReceiver Details for ID: {receiver_id}")
+        receiver_name = receiver_records[0][0]
+        father_name = receiver_records[0][1]
+        print(f"Receiver Name: {receiver_name}")
+        print(f"Father's Name: {father_name}")
+
+        print("\nList of received books:")
+        for idx, fields in enumerate(receiver_records):
+            book_title = fields[3]
+            author = fields[4]
+            receive_date_time = fields[5]
+            due_date = fields[6]
+            print(f"{idx + 1}. Book: {book_title} by {author}")
+            print(f"Received on: {receive_date_time}")
+            print(f"Due date: {due_date}\n")
+
+    def load_books_from_file(self, file_path="C:/EmazWorkspace/DSAproject/book.txt"):
+        """Load books from a file and append them to the linked list and queue."""
+        with open(file_path, 'r') as file:
+            for line in file:
+                title, author, isbn, status = line.strip().split(',')
+                new_book = Book(title, author, isbn, status)
+                self.books_linkedlist.append(new_book)
+                if status == "available":
+                    self.available_books_queue.enqueue(new_book)
+
+    def load_ebooks_from_file(self, file_path="C:/EmazWorkspace/DSAproject/ebook.txt"):
+        """Load ebooks from a file and append them to the stack and array."""
+        with open(file_path, 'r') as file:
+            for line in file:
+                title, author, format = line.strip().split(',')
+                new_ebook = Ebook(title, author, format)
+                self.ebooks_stack.push(new_ebook)
+                self.available_ebooks.append(new_ebook)
+
+    def add_book(self, title, author, isbn):
+        """Add a new book to the linked list and queue."""
+        new_book = Book(title, author, isbn)
+        self.books_linkedlist.append(new_book)
+        self.available_books_queue.enqueue(new_book)
+
+        # Append the new book to the books file
+        with open("C:/EmazWorkspace/DSAproject/book.txt", "a") as file:
+            file.write(f"{title},{author},{isbn},available\n")
+
+    def add_ebook(self, title, author, format):
+        """Add a new ebook to the stack and array."""
+        new_ebook = Ebook(title, author, format)
+        self.ebooks_stack.push(new_ebook)
+        self.available_ebooks.append(new_ebook)
+
+        # Append the new ebook to the ebooks file
+        with open("C:/EmazWorkspace/DSAproject/ebook.txt", "a") as file:
+            file.write(f"{title},{author},{format}\n")
+
+    def remove_book(self, title, author=None, isbn=None):
+        """Remove a book from the linked list and queue based on title, author, and/or ISBN."""
+        current = self.books_linkedlist.head
+        previous = None
+
+        while current:
+            if current.data.title == title and (
+                    (author is None or current.data.author == author) and
+                    (isbn is None or current.data.isbn == isbn)):
+                # Remove the book from the linked list
+                if previous:
+                    previous.next = current.next
+                else:
+                    self.books_linkedlist.head = current.next
+
+                # Handle tail update
+                if current == self.books_linkedlist.tail:
+                    self.books_linkedlist.tail = previous
+
+                # Remove the book from the available books queue
+                self.available_books_queue.items = [book for book in self.available_books_queue.items if
+                                                    book != current.data]
+
+                # Update the books file
+                self.update_books_file()
+
+                return True
+            previous = current
+            current = current.next
+
+        return False
+
+    def remove_ebook(self, title, author=None, format=None):
+        """Remove an ebook from the stack and array based on title, author, and/or format."""
+        temp_stack = Stack()
+        removed_ebook = None
+
+        while not self.ebooks_stack.is_empty():
+            ebook = self.ebooks_stack.pop()
+            if ebook.title == title and (
+                    (author is None or ebook.author == author) and
+                    (format is None or ebook.format == format)):
+                removed_ebook = ebook
+                break
+            temp_stack.push(ebook)
+
+        # Restore the original stack except the removed ebook
+        while not temp_stack.is_empty():
+            self.ebooks_stack.push(temp_stack.pop())
+
+        # If the ebook was removed, update the available ebooks list
+        if removed_ebook:
+            self.available_ebooks = [ebook for ebook in self.available_ebooks if ebook != removed_ebook]
+
+            # Update the ebooks file
+            self.update_ebooks_file()
+
+            return True
+
+        return False
+
+    def search_book(self, query):
+        """Search for books in the linked list based on the query."""
+        found_books = self.books_linkedlist.search(query)
+        return found_books
+
+    def search_ebook(self, query):
+        """Search for ebooks in the stack based on the query."""
+        found_ebooks = self.ebooks_stack.search(query)
+        return found_ebooks
+
+    def display_menu(self):
+        """Display the main menu for the library management system."""
+        print("\nLibrary Management Menu")
+        print("1. Add a new book")
+        print("2. Remove a book")
+        print("3. Search for a book")
+        print("4. Add a new ebook")
+        print("5. Remove an ebook")
+        print("6. Search for an ebook")
+        print("7. View available books")
+        print("8. View available ebooks")
+        print("9. Receive a book")
+        print("10.Return a book")
+        print("11.Retrieve receiver details")
+        print("12.Quit")
+
+    def view_available_books(self):
+        """View available books without modifying the available books queue."""
+        print("\nAvailable Books:")
+        current = self.available_books_queue.items  # Directly access the queue items
+        for book in current:
+            print(f"{book.title} by {book.author}, ISBN: {book.isbn}")
+
+    def view_available_ebooks(self):
+        """View available ebooks without modifying the available ebooks array."""
+        print("\nAvailable Ebooks:")
+        for ebook in self.available_ebooks:
+            print(f"{ebook.title} by {ebook.author}, Format: {ebook.format}")
+
+    def update_books_file(self):
+        """Update the books file with the current state of the linked list."""
+        with open("C:/EmazWorkspace/DSAproject/book.txt", "w") as file:
+            current = self.books_linkedlist.head
+            while current:
+                file.write(f"{current.data.title},{current.data.author},{current.data.isbn},{current.data.status}\n")
+                current = current.next
+
+    def update_ebooks_file(self):
+        """Update the ebooks file with the current state of the ebooks stack and available ebooks list."""
+        # Write available ebooks list back to file
+        with open("C:/EmazWorkspace/DSAproject/ebook.txt", "w") as file:
+            for ebook in self.available_ebooks:
+                file.write(f"{ebook.title},{ebook.author},{ebook.format}\n")
+
+    def run(self):
+        """Main function to run the library management system."""
+        while True:
+            self.display_menu()
+            choice = input("Enter your choice: ")
+            if choice == "1":
+                title = input("Enter the title of the book: ")
+                author = input("Enter the author of the book: ")
+                isbn = input("Enter the ISBN of the book: ")
+                self.add_book(title, author, isbn)
+                print("Book added successfully!")
+            elif choice == "2":
+                title = input("Enter the title of the book to remove: ")
+                author = input("Enter the author of the book to remove (optional, press Enter to skip): ")
+                isbn = input("Enter the ISBN of the book to remove (optional, press Enter to skip): ")
+                if self.remove_book(title, author if author else None, isbn if isbn else None):
+                    print("Book removed successfully!")
+                else:
+                    print("Book not found or already removed.")
+            elif choice == "3":
+                query = input("Enter title, author, or ISBN of the book to search: ")
+                found_books = self.search_book(query)
+                if found_books:
+                    print("\nFound Books:")
+                    for book in found_books:
+                        print(f"{book.title} by {book.author}, ISBN: {book.isbn}")
+                else:
+                    print("No books found matching the query.")
+            elif choice == "4":
+                title = input("Enter the title of the ebook: ")
+                author = input("Enter the author of the ebook: ")
+                format = input("Enter the format of the ebook (PDF, EPUB, MOBI, etc.): ")
+                self.add_ebook(title, author, format)
+                print("Ebook added successfully!")
+            elif choice == "5":
+                title = input("Enter the title of the ebook to remove: ")
+                author = input("Enter the author of the ebook to remove (optional, press Enter to skip): ")
+                format = input("Enter the format of the ebook to remove (optional, press Enter to skip): ")
+                if self.remove_ebook(title, author if author else None, format if format else None):
+                    print("Ebook removed successfully!")
+                else:
+                    print("Ebook not found or already removed.")
+            elif choice == "6":
+                query = input("Enter title or author of the ebook to search: ")
+                found_ebooks = self.search_ebook(query)
+                if found_ebooks:
+                    print("\nFound Ebooks:")
+                    for ebook in found_ebooks:
+                        print(f"{ebook.title} by {ebook.author}, Format: {ebook.format}")
+                else:
+                    print("No ebooks found matching the query.")
+            elif choice == "7":
+                self.view_available_books()
+            elif choice == "8":
+                self.view_available_ebooks()
+            elif choice == "9":
+                # Option : Receive a book
+                self.receive_book()
+            elif choice == "10":
+                # Option 11: Return a book
+                self.return_book()
+            elif choice == "11":
+                # New option to retrieve receiver details
+                self.get_receiver_details()
+            elif choice == "12":
+                print("Exiting the Library Management System. Goodbye!")
+                break
+            else:
+                print("Invalid choice. Please enter a number between 1 and 11.")
+
+
+# Example usage:
+library_system = LibraryManagementSystem()
+library_system.run()
